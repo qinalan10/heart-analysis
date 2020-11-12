@@ -1,0 +1,474 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Predicting Heart Disease From 1988 Data},
+  pdfauthor={Alan Qin (aqin2@illinois.edu)},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Predicting Heart Disease From 1988 Data}
+\author{Alan Qin
+(\href{mailto:aqin2@illinois.edu}{\nolinkurl{aqin2@illinois.edu}})}
+\date{11/11/2020}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{abstract}{%
+\subsection{Abstract}\label{abstract}}
+
+\begin{quote}
+Abstract text goes here.
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+The goal of this analysis is to predict the presence of heart disease
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{methods}{%
+\subsection{Methods}\label{methods}}
+
+Describe the methods used in this section.
+
+\hypertarget{data}{%
+\subsubsection{Data}\label{data}}
+
+Specifically describe the data and how it is used here.
+
+\texttt{age} - age in years~\\
+\texttt{sex} - sex (1 = male; 0 = female)~\\
+\texttt{cp} - chest pain type ~
+
+\texttt{trestbps} - resting blood pressure (in mm Hg on admission to the
+hospital) ~\\
+\texttt{chol} - serum cholesterol in mg/dl~\\
+\texttt{fbs} - (fasting blood sugar \textgreater{} 120 mg/dl) (1 = true;
+0 = false)~\\
+\texttt{restecg} - resting electrocardiographic results~
+
+\texttt{thalach} - maximum heart rate achieve~\\
+\texttt{exang} - exercise induced angina (1 = yes; 0 = no)~\\
+\texttt{oldpeak} - ST depression induced by exercise relative to rest~\\
+\texttt{slope} - the slope of the peak exercise ST segment~
+
+\texttt{ca} - number of major vessels (0-3) colored by flourosopy~
+
+\texttt{thal} - 3 = normal; 6 = fixed defect; 7 = reversable defect~
+
+\texttt{num} - diagnosis of heart disease (angiographic disease status)~
+
+For the training and testing data I used changed the variables from
+\texttt{v0}, \texttt{v1}, \texttt{v2}, \texttt{v3}, \texttt{v4} to just
+\texttt{v0} and \texttt{v1}. This is because I wanted to accurately
+predict heart disease instead of how much heart disease.
+
+\hypertarget{original-training-data-summary}{%
+\paragraph{Original Training Data
+Summary}\label{original-training-data-summary}}
+
+\begin{longtable}[]{@{}ll@{}}
+\caption{Data summary}\tabularnewline
+\toprule
+\endhead
+Name & hd\_trn\tabularnewline
+Number of rows & 738\tabularnewline
+Number of columns & 12\tabularnewline
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ &\tabularnewline
+Column type frequency: &\tabularnewline
+factor & 7\tabularnewline
+numeric & 5\tabularnewline
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ &\tabularnewline
+Group variables & None\tabularnewline
+\bottomrule
+\end{longtable}
+
+\textbf{Variable type: factor}
+
+\begin{longtable}[]{@{}lrrlrl@{}}
+\toprule
+skim\_variable & n\_missing & complete\_rate & ordered & n\_unique &
+top\_counts\tabularnewline
+\midrule
+\endhead
+sex & 0 & 1.00 & FALSE & 2 & mal: 589, fem: 149\tabularnewline
+cp & 0 & 1.00 & FALSE & 4 & asy: 410, non: 157, aty: 134, typ:
+37\tabularnewline
+fbs & 78 & 0.89 & FALSE & 2 & \textless{} 1: 544, \textgreater{} 1:
+116\tabularnewline
+restecg & 2 & 1.00 & FALSE & 3 & nor: 444, lef: 148, ST-:
+144\tabularnewline
+exang & 44 & 0.94 & FALSE & 2 & yes: 423, no: 271\tabularnewline
+num & 0 & 1.00 & FALSE & 5 & v0: 329, v1: 212, v2: 88, v3:
+86\tabularnewline
+location & 0 & 1.00 & FALSE & 4 & cl: 244, hu: 226, va: 164, ch:
+104\tabularnewline
+\bottomrule
+\end{longtable}
+
+\textbf{Variable type: numeric}
+
+\begin{longtable}[]{@{}lrrrrrrrrrl@{}}
+\toprule
+skim\_variable & n\_missing & complete\_rate & mean & sd & p0 & p25 &
+p50 & p75 & p100 & hist\tabularnewline
+\midrule
+\endhead
+age & 0 & 1.00 & 53.62 & 9.39 & 28 & 47 & 54.0 & 60.0 & 77.0 &
+▁▅▇▆▁\tabularnewline
+trestbps & 48 & 0.93 & 132.08 & 18.14 & 80 & 120 & 130.0 & 140.0 & 200.0
+& ▁▇▇▂▁\tabularnewline
+chol & 165 & 0.78 & 247.07 & 61.06 & 85 & 208 & 240.0 & 276.0 & 603.0 &
+▂▇▂▁▁\tabularnewline
+thalach & 44 & 0.94 & 137.17 & 26.01 & 60 & 120 & 140.0 & 156.0 & 202.0
+& ▁▅▇▆▂\tabularnewline
+oldpeak & 51 & 0.93 & 0.87 & 1.06 & -2 & 0 & 0.5 & 1.5 & 6.2 &
+▁▇▃▁▁\tabularnewline
+\bottomrule
+\end{longtable}
+
+From looking at the original data, there were a few things that were
+that caught my eye. First was that the minimum of \texttt{oldpeak} was
+\(-2\) which is weird because that means that the heart rate went up
+after stopping working out which is strange. Another feature that stood
+out to me is that there were multiple values of 0 for cholesterol and
+that shouldn't be possible. I just dealt with it like that value of 0
+was just another \texttt{NA} value. Even though it reduces the size of
+the training and testing data, it makes using models easier. Finally, I
+got rid of the columns that contained more than 30\% \texttt{NA} values
+because if I included them, the resulting training and test data set
+would be too small.
+
+\hypertarget{cleaned-up-training-data}{%
+\paragraph{Cleaned Up Training Data}\label{cleaned-up-training-data}}
+
+\begin{longtable}[]{@{}ll@{}}
+\caption{Data summary}\tabularnewline
+\toprule
+\endhead
+Name & hd\_trn\_clean\tabularnewline
+Number of rows & 525\tabularnewline
+Number of columns & 12\tabularnewline
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ &\tabularnewline
+Column type frequency: &\tabularnewline
+factor & 7\tabularnewline
+numeric & 5\tabularnewline
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ &\tabularnewline
+Group variables & None\tabularnewline
+\bottomrule
+\end{longtable}
+
+\textbf{Variable type: factor}
+
+\begin{longtable}[]{@{}lrrlrl@{}}
+\toprule
+skim\_variable & n\_missing & complete\_rate & ordered & n\_unique &
+top\_counts\tabularnewline
+\midrule
+\endhead
+sex & 0 & 1 & FALSE & 2 & mal: 395, fem: 130\tabularnewline
+cp & 0 & 1 & FALSE & 4 & asy: 271, aty: 115, non: 112, typ:
+27\tabularnewline
+fbs & 0 & 1 & FALSE & 2 & \textless{} 1: 442, \textgreater{} 1:
+83\tabularnewline
+restecg & 0 & 1 & FALSE & 3 & nor: 319, lef: 134, ST-: 72\tabularnewline
+exang & 0 & 1 & FALSE & 2 & yes: 325, no: 200\tabularnewline
+num & 0 & 1 & FALSE & 2 & v0: 279, v1: 246\tabularnewline
+location & 0 & 1 & FALSE & 3 & cl: 244, hu: 201, va: 80, ch:
+0\tabularnewline
+\bottomrule
+\end{longtable}
+
+\textbf{Variable type: numeric}
+
+\begin{longtable}[]{@{}lrrrrrrrrrl@{}}
+\toprule
+skim\_variable & n\_missing & complete\_rate & mean & sd & p0 & p25 &
+p50 & p75 & p100 & hist\tabularnewline
+\midrule
+\endhead
+age & 0 & 1 & 52.74 & 9.51 & 28 & 46 & 54.0 & 59.0 & 77.0 &
+▂▅▇▆▁\tabularnewline
+trestbps & 0 & 1 & 132.78 & 17.13 & 92 & 120 & 130.0 & 140.0 & 200.0 &
+▂▇▅▂▁\tabularnewline
+chol & 0 & 1 & 246.33 & 59.86 & 85 & 208 & 240.0 & 275.0 & 603.0 &
+▂▇▂▁▁\tabularnewline
+thalach & 0 & 1 & 140.87 & 25.07 & 69 & 122 & 142.0 & 160.0 & 202.0 &
+▁▅▇▇▂\tabularnewline
+oldpeak & 0 & 1 & 0.90 & 1.07 & 0 & 0 & 0.5 & 1.5 & 6.2 &
+▇▃▁▁▁\tabularnewline
+\bottomrule
+\end{longtable}
+
+After cleaning up the data, this is the summary of what the training
+dataset looked like. The descriptive statistics of the data look much
+more reasonable. With 525 rows of data, I felt that it would have been
+better if there was more but there wasn't much more in the full dataset.
+
+\hypertarget{modeling}{%
+\subsubsection{Modeling}\label{modeling}}
+
+\hypertarget{logistic-regression}{%
+\paragraph{Logistic Regression}\label{logistic-regression}}
+
+\hypertarget{logistic-regression-results}{%
+\paragraph{Logistic Regression
+Results}\label{logistic-regression-results}}
+
+\begin{verbatim}
+##        log_full_accuracy log_no_invasion_accuracy  log_age_sex_cp_accuracy 
+##                0.7941176                0.8014706                0.7794118
+\end{verbatim}
+
+The first machine learning method I used was the logistic regression. I
+chose to use this method because it is a very `simple' model and is
+easily interpretable compared to other methods like boosting and random
+forest. Logistic regression is also very good for estimating binary
+classification problems, which was another reason I tried it first.
+Using logistic regression I made three different models. The first model
+I made was a model with all the predictors from our training data set.
+The second one I made was one with all the predictors besides the ones
+that required an invasive procedure or another test that required the
+patient to work out. The final logistic model I made was one that just
+used \texttt{age}, \texttt{sex}, \texttt{cp}, and \texttt{location} as
+the predictors, these predictors are the ones that do not require any
+procedure and is just prior knowledge.
+
+\hypertarget{k-nearest-neighbors}{%
+\paragraph{K-Nearest Neighbors}\label{k-nearest-neighbors}}
+
+\hypertarget{knn-results}{%
+\paragraph{KNN Results}\label{knn-results}}
+
+\begin{verbatim}
+##        knn_full_accuracy knn_no_invasion_accuracy  knn_age_sex_cp_accuracy 
+##                0.6029412                0.6838235                0.6397059
+\end{verbatim}
+
+The next machine learning method I used was K-Nearest Neighbors. I chose
+this method because it is a very basic method that is also
+interpretable. Using K-Nearest Neighbors, I again made three different
+models. The first model I made was a model with all the predictors from
+our training data set. The second one I made was one with all the
+predictors besides the ones that required an invasive procedure or
+another test that required the patient to work out. The final K-Nearest
+Neighbors model I made was one that just used \texttt{age},
+\texttt{sex}, \texttt{cp}, and \texttt{location} as the predictors,
+these predictors are the ones that do not require any procedure and is
+just prior knowledge.
+
+\hypertarget{logistic-boosted-classification}{%
+\paragraph{Logistic Boosted
+Classification}\label{logistic-boosted-classification}}
+
+\hypertarget{logistic-boost-results}{%
+\paragraph{Logistic Boost Results}\label{logistic-boost-results}}
+
+\begin{verbatim}
+##         log_boost_all_accuracy log_boost_no_invasion_accuracy 
+##                      0.7500000                      0.7867647 
+##  log_boost_age_sex_cp_accuracy 
+##                      0.7794118
+\end{verbatim}
+
+The next machine learning method I used was Logistic Boost. I chose this
+method because it is a combination of using logistic regression as well
+as boosting, a very accurate machine learning method. Using Logistic
+Boost, I again made three different models. The first model I made was a
+model with all the predictors from our training data set. The second one
+I made was one with all the predictors besides the ones that required an
+invasive procedure or another test that required the patient to work
+out. The final model I made was one that just used \texttt{age},
+\texttt{sex}, \texttt{cp}, and \texttt{location} as the predictors,
+these predictors are the ones that do not require any procedure and is
+just prior knowledge.
+
+\hypertarget{random-forest}{%
+\paragraph{Random Forest}\label{random-forest}}
+
+\hypertarget{random-forest-results}{%
+\paragraph{Random Forest Results}\label{random-forest-results}}
+
+\begin{verbatim}
+##         rf_all_accuracy rf_no_invasion_accuracy  rf_age_sex_cp_accuracy 
+##               0.7720588               0.8161765               0.8014706
+\end{verbatim}
+
+The next machine learning method I used was Random Forest. I chose this
+method because it is one of the most popular machine learning methods
+for classification. I chose this machine learning method because
+essentially performing decision trees multiple times and choosing the
+best one by improving on each tree. Using Random Forest, I again made
+three different models. The first model I made was a model with all the
+predictors from our training data set. The second one I made was one
+with all the predictors besides the ones that required an invasive
+procedure or another test that required the patient to work out. The
+final model I made was one that just used \texttt{age}, \texttt{sex},
+\texttt{cp}, and \texttt{location} as the predictors, these predictors
+are the ones that do not require any procedure and is just prior
+knowledge.
+
+\hypertarget{xgboost-linear}{%
+\paragraph{XGboost Linear}\label{xgboost-linear}}
+
+\begin{verbatim}
+##         xgboostL_all_accuracy xgboostL_no_invasion_accuracy 
+##                     0.7867647                     0.8014706 
+##  xgboostL_age_sex_cp_accuracy 
+##                     0.8088235
+\end{verbatim}
+
+The final machien learning method I used was Extreme Gradient Boost. I
+chose this method because it is probably the most popular machine
+learning method, giving the most accurate for results for many machine
+learning problems. Using XGBoost, I again made three different models.
+The first model I made was a model with all the predictors from our
+training data set. The second one I made was one with all the predictors
+besides the ones that required an invasive procedure or another test
+that required the patient to work out. The final model I made was one
+that just used \texttt{age}, \texttt{sex}, \texttt{cp}, and
+\texttt{location} as the predictors, these predictors are the ones that
+do not require any procedure and is just prior knowledge.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{results}{%
+\subsection{Results}\label{results}}
+
+\begin{verbatim}
+## [1] 0.5
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 0.5
+\end{verbatim}
+
+From this accuracy function, if we predict the majority class, we can
+see that our baseline accuracy is 50\%. So if we construct a model, we
+should have a higher accuracy that 50\%.
+
+\begin{verbatim}
+##              log_full_accuracy       log_no_invasion_accuracy 
+##                      0.7941176                      0.8014706 
+##        log_age_sex_cp_accuracy              knn_full_accuracy 
+##                      0.7794118                      0.6029412 
+##       knn_no_invasion_accuracy        knn_age_sex_cp_accuracy 
+##                      0.6838235                      0.6397059 
+##         log_boost_all_accuracy log_boost_no_invasion_accuracy 
+##                      0.7500000                      0.7867647 
+##  log_boost_age_sex_cp_accuracy                rf_all_accuracy 
+##                      0.7794118                      0.7720588 
+##        rf_no_invasion_accuracy         rf_age_sex_cp_accuracy 
+##                      0.8161765                      0.8014706 
+##          xgboostL_all_accuracy  xgboostL_no_invasion_accuracy 
+##                      0.7867647                      0.8014706 
+##   xgboostL_age_sex_cp_accuracy 
+##                      0.8088235
+\end{verbatim}
+
+\begin{verbatim}
+## rf_no_invasion_accuracy 
+##               0.8161765
+\end{verbatim}
+
+As we can clearly see from the accuracy results, all of our models
+improve on the baseline accuracy of just predicting the majority class.
+From the results, we can also see that the Random Forest model is the
+best in terms of accuracy with a prediction accuracy of 81.62\%, which
+is significantly better than the baseline. We can also see that in terms
+of differences between the predictors used, we do not see that much of a
+difference which is very surprising.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{discussion}{%
+\subsection{Discussion}\label{discussion}}
+
+Discuss your results here.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{appendix}{%
+\subsection{Appendix}\label{appendix}}
+
+Place potential additional information here.
+
+\begin{verbatim}
+##  rf_age_sex_cp_accuracy rf_no_invasion_accuracy 
+##               0.8014706               0.8161765
+\end{verbatim}
+
+\end{document}

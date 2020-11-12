@@ -32,7 +32,18 @@
 
 ## To Do 
 - Look for hidden missing data ie cholestrol levels of 0 
-
+- Look into negative values of old peak 
+- Deal with missing data 
+- fit and evaluate models 
+  - establish baselines 
+  - consider moving to binary response variable
+  - consider re-introducing missing data 
+  - consider new modeling techniques 
+    - some sort of linear model 
+    - random forest
+    - some sort of boosting 
+  - Start using cross validation 
+  
 
 
 

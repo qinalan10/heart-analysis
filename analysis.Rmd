@@ -1,66 +1,475 @@
 ---
-title: "Title of Analysis Goes Here"
-author: "Your Name (netid@illinois.edu)"
-date: "Insert Date Here"
+title: "Predicting Heart Disease From 1988 Data"
+author: "Alan Qin (aqin2@illinois.edu)"
+date: "11/11/2020"
 output:
-  html_document: 
-    theme: default
+  html_document:
+    theme: united
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
 ```{r, setup, include = FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center')
 ```
 
 ```{r, load-packages, include = FALSE}
 # load packages
+library(tidyverse)
+library(caret)
 ```
 
-```{r read-full-data, warning = FALSE, message = FALSE}
+```{r read-full-data, warning = FALSE, message = FALSE, inlcude = FALSE}
 # read full data
 hd = readr::read_csv("data/hd.csv")
 ```
+
 
 ***
 
 ## Abstract
 
-> Abstract text goes here.
+We are doing this analysis in order to analyze the given data and predict the presence of heart disease in a patient without any invasive procedures.To do this analysis, we have to clean the data, examine the data, create the models, then evaluate each model. To evaluate the data, we established a baseline accuracy of just using the majority class to predict heart disease and determined if using a model is better than that prediction. After creating many different machine learning models, I used a random forest model to predict with $81%$ accuracy if a person has heart disease based on the predictors given. This resulting model does not require and invasive procedures or exercise testing. 
+
 
 ***
 
 ## Introduction
 
-Write your introduction here.
+The goal of this analysis is to predict the presence of heart disease without having to use invasive procedures or exercise testing. Invasive procedures are not ideal because they pose a certain amount of risk during the procedure so if I am able to predict with a certain amount of accuracy based on non-invasive and non-exercise procedures, it is both beneficial to the patient and the doctors.
 
 ***
 
 ## Methods
 
-Describe the methods used in this section.
-
 ### Data
 
 Specifically describe the data and how it is used here.
 
+
+`age` - age in years\   
+`sex` - sex (1 = male; 0 = female)\   
+`cp` - chest pain type \   
+  
+`trestbps` - resting blood pressure (in mm Hg on admission to the hospital) \    
+`chol` - serum cholesterol in mg/dl\    
+`fbs` - (fasting blood sugar > 120 mg/dl) (1 = true; 0 = false)\    
+`restecg` - resting electrocardiographic results\    
+  
+`thalach` - maximum heart rate achieve\     
+`exang` - exercise induced angina (1 = yes; 0 = no)\      
+`oldpeak` - ST depression induced by exercise relative to rest\    
+`slope` - the slope of the peak exercise ST segment\    
+
+`ca` -  number of major vessels (0-3) colored by flourosopy\    
+
+`thal` - 3 = normal; 6 = fixed defect; 7 = reversable defect\      
+
+`num ` - diagnosis of heart disease (angiographic disease status)\    
+
+For the training and testing data I used changed the variables for `num` from `v0`, `v1`, `v2`, `v3`, `v4` to just `v0` and `v1`. This is because I wanted to accurately predict heart disease instead of how much heart disease. 
+
+```{r data cleaning and changing factor names, include = FALSE}
+hd = read_csv("data/hd.csv")
+
+# test train split the data
+set.seed(42)
+trn_idx = createDataPartition(hd$num, p = .8, list = TRUE)
+hd_trn = hd[trn_idx$Resample1, ]
+hd_tst = hd[-trn_idx$Resample1, ]
+
+# coerce char variables to be factors
+hd_trn$num = factor(hd_trn$num)
+hd_tst$num = factor(hd_tst$num)
+
+hd_trn$location = factor(hd_trn$location)
+hd_tst$location = factor(hd_tst$location)
+
+## Change cp into factors
+hd_trn$cp[hd_trn$cp == 1] = 'typical angina'
+hd_trn$cp[hd_trn$cp == 2] = 'atypical angina'
+hd_trn$cp[hd_trn$cp == 3] = 'non-anginal pain'
+hd_trn$cp[hd_trn$cp == 4] = 'asymptomatic'
+hd_trn$cp = factor(hd_trn$cp)
+
+hd_tst$cp[hd_tst$cp == 1] = 'typical angina'
+hd_tst$cp[hd_tst$cp == 2] = 'atypical angina'
+hd_tst$cp[hd_tst$cp == 3] = 'non-anginal pain'
+hd_tst$cp[hd_tst$cp == 4] = 'asymptomatic'
+hd_tst$cp = factor(hd_tst$cp)
+
+## Change Sex into factors
+hd_tst$sex[hd_tst$sex == 1] = 'male'
+hd_tst$sex[hd_tst$sex == 0] = 'female'
+hd_tst$sex = factor(hd_tst$sex)
+
+hd_trn$sex[hd_trn$sex == 1] = 'male'
+hd_trn$sex[hd_trn$sex == 0] = 'female'
+hd_trn$sex = factor(hd_trn$sex)
+
+## Change FBS into factors
+hd_trn$fbs[hd_trn$fbs == 1] = '> 120'
+hd_trn$fbs[hd_trn$fbs == 0] = '< 120'
+hd_trn$fbs = factor(hd_trn$fbs)
+
+hd_tst$fbs[hd_tst$fbs == 1] = '> 120'
+hd_tst$fbs[hd_tst$fbs == 0] = '< 120'
+hd_tst$fbs = factor(hd_tst$fbs)
+
+## Change restecg into factors
+hd_trn$restecg[hd_trn$restecg == 0] = 'normal'
+hd_trn$restecg[hd_trn$restecg == 1] = 'ST-T Wave'
+hd_trn$restecg[hd_trn$restecg == 2] = 'left hypertrophy'
+hd_trn$restecg = factor(hd_trn$restecg)
+
+hd_tst$restecg[hd_tst$restecg == 0] = 'normal'
+hd_tst$restecg[hd_tst$restecg == 1] = 'ST-T Wave'
+hd_tst$restecg[hd_tst$restecg == 2] = 'left hypertrophy'
+hd_tst$restecg = factor(hd_tst$restecg)
+
+
+## Change exang into factors
+hd_trn$exang[hd_trn$exang == 0] = 'yes'
+hd_trn$exang[hd_trn$exang == 1] = 'no'
+hd_trn$exang = factor(hd_trn$exang)
+
+hd_tst$exang[hd_tst$exang == 0] = 'yes'
+hd_tst$exang[hd_tst$exang == 1] = 'no'
+hd_tst$exang = factor(hd_tst$exang)
+
+# Additional Feature Engineering
+hd_trn[which(hd_trn$chol == 0), ]$chol = NA
+hd_tst[which(hd_tst$chol == 0), ]$chol = NA
+
+# function to determine proportion of NAs in a vector
+na_prop = function(x) {
+  mean(is.na(x))
+}
+
+
+sapply(hd_trn, na_prop)
+
+# create dataset without columns containing more than 30% NAs
+hd_trn = hd_trn[, !sapply(hd_trn, na_prop) > 0.3]
+hd_tst = hd_tst[, !sapply(hd_tst, na_prop) > 0.3]
+```
+
+
+#### Original Training Data Summary 
+```{r looking at descriptive statistics, echo = FALSE}
+skimr::skim(hd_trn)
+```
+
+
+From looking at the original data, there were a few things that were that caught my eye. First was that the minimum of `oldpeak` was $-2$ which is weird because that means that the heart rate went up after stopping working out which is strange. Another feature that stood out to me is that there were multiple values of 0 for cholesterol and that shouldn't be possible. I just dealt with it like that value of 0 was just another `NA` value. Even though it reduces the size of the training and testing data, it makes using models easier. Finally, I got rid of the columns that contained more than 30% `NA` values because if I included them, the resulting training and test data set would be too small.
+
+
+
+```{r creating training and test data, include = FALSE}
+hd_trn_clean = na.omit(hd_trn)
+levels(hd_trn_clean$num)[levels(hd_trn_clean$num) == 'v2'] = 'v1'
+levels(hd_trn_clean$num)[levels(hd_trn_clean$num) == 'v3'] = 'v1'
+levels(hd_trn_clean$num)[levels(hd_trn_clean$num) == 'v4'] = 'v1'
+
+hd_tst_clean = na.omit(hd_tst)
+levels(hd_tst_clean$num)[levels(hd_tst_clean$num) == 'v2'] = 'v1'
+levels(hd_tst_clean$num)[levels(hd_tst_clean$num) == 'v3'] = 'v1'
+levels(hd_tst_clean$num)[levels(hd_tst_clean$num) == 'v4'] = 'v1'
+```
+
+
+
+#### Cleaned Up Training Data 
+```{r looking at descriptive statistics for train, echo = FALSE}
+# Look at descriptive statistics
+skimr::skim(hd_trn_clean)
+```
+
+
+After cleaning up the data, this is the summary of what the training dataset looked like. The descriptive statistics of the data look much more reasonable. With 525 rows of data, I felt that it would have been better if there was more but there wasn't much more in the full dataset.
+
+
+
+
+```{r accuracy, include = FALSE}
+## Accuracy Function
+accuracy = function(actual, predicted) {
+  mean(actual == predicted)
+}
+```
+
+
 ### Modeling
 
-Discuss your modeling and validation strategy here.
+#### Logistic Regression
+
+```{r logistic all, warning = FALSE, include = FALSE}
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_all = train(num ~ .,
+                data = hd_trn_clean, 
+                trControl = cv_5,
+                method = 'glm', 
+                family = binomial(),
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_no_invasion= train(num ~ . - thalach - oldpeak - exang,
+                data = hd_trn_clean, 
+                trControl = cv_5,
+                method = 'glm', 
+                family = binomial(),
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_age_sex_cp = train(num ~ age + sex + location + cp,
+                data = hd_trn_clean, 
+                trControl = cv_5,
+                method = 'glm', 
+                family = binomial(),
+                )
+
+
+```
+
+#### Logistic Regression Results 
+```{r, warning = FALSE}
+log_full_accuracy = accuracy(hd_tst_clean$num, predict(log_all, hd_tst_clean))
+log_no_invasion_accuracy = accuracy(hd_tst_clean$num, predict(log_no_invasion, hd_tst_clean))
+log_age_sex_cp_accuracy = accuracy(hd_tst_clean$num, predict(log_age_sex_cp, hd_tst_clean))
+(log_accuracies = c(
+  log_full_accuracy = log_full_accuracy,
+  log_no_invasion_accuracy = log_no_invasion_accuracy,
+  log_age_sex_cp_accuracy = log_age_sex_cp_accuracy
+))
+```
+
+
+The first machine learning method I used was the logistic regression. I chose to use this method because it is a very 'simple' model and is easily interpretable compared to other methods like boosting and random forest. Logistic regression is also very good for estimating binary classification problems, which was another reason I tried it first. Using logistic regression I made three different models. The first model I made was a model with all the predictors from our training data set. The second one I made was one with all the predictors besides the ones that required an invasive procedure or another test that required the patient to work out. The final logistic model I made was one that just used `age`, `sex`, `cp`, and `location` as the predictors, these predictors are the ones that do not require any procedure and is just prior knowledge. 
+
+
+
+#### K-Nearest Neighbors 
+
+```{r knn all, include = FALSE}
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+knn_all = train(form = num ~ .,
+                data = hd_trn_clean, 
+                method = 'knn', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+knn_no_invasion = train(form = num ~ . - thalach - exang - oldpeak,
+                data = hd_trn_clean, 
+                method = 'knn', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+knn_age_sex_cp = train(form = num ~ age + sex + cp + location,
+                data = hd_trn_clean, 
+                method = 'knn', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+```
+
+#### KNN Results 
+```{r knn accuracy}
+knn_full_accuracy = accuracy(hd_tst_clean$num, predict(knn_all, hd_tst_clean))
+knn_no_invasion_accuracy = accuracy(hd_tst_clean$num, predict(knn_no_invasion, hd_tst_clean))
+knn_age_sex_cp_accuracy = accuracy(hd_tst_clean$num, predict(knn_age_sex_cp, hd_tst_clean))
+(knn_accuracies = c(
+  knn_full_accuracy = knn_full_accuracy,
+  knn_no_invasion_accuracy  = knn_no_invasion_accuracy,
+  knn_age_sex_cp_accuracy = knn_age_sex_cp_accuracy
+))
+```
+
+
+The next machine learning method I used was K-Nearest Neighbors. I chose this method because it is a very basic method that is also interpretable. Using K-Nearest Neighbors, I again made three different models. The first model I made was a model with all the predictors from our training data set. The second one I made was one with all the predictors besides the ones that required an invasive procedure or another test that required the patient to work out. The final K-Nearest Neighbors model I made was one that just used `age`, `sex`, `cp`, and `location` as the predictors, these predictors are the ones that do not require any procedure and is just prior knowledge. 
+
+
+#### Logistic Boosted Classification
+
+```{r logistic full, include = FALSE}
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_boost_all = train(form = num ~ .,
+                data = hd_trn_clean, 
+                method = 'LogitBoost', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_boost_no_invasion = train(form = num ~ . - thalach - exang - oldpeak,
+                data = hd_trn_clean, 
+                method = 'LogitBoost', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+log_boost_age_sex_cp = train(form = num ~ age + sex + cp + location,
+                data = hd_trn_clean, 
+                method = 'LogitBoost', 
+                trControl = cv_5,
+                tuneLength = 100
+                )
+```
+
+#### Logistic Boost Results 
+```{r log boost accuracy}
+log_boost_all_accuracy = accuracy(hd_tst_clean$num, predict(log_boost_all, hd_tst_clean))
+log_boost_no_invasion_accuracy = accuracy(hd_tst_clean$num, predict(log_boost_no_invasion, hd_tst_clean))
+log_boost_age_sex_cp_accuracy = accuracy(hd_tst_clean$num, predict(log_boost_age_sex_cp, hd_tst_clean))
+
+(log_boosted_accuracies = c(
+  log_boost_all_accuracy = log_boost_all_accuracy,
+  log_boost_no_invasion_accuracy = log_boost_no_invasion_accuracy,
+  log_boost_age_sex_cp_accuracy = log_boost_age_sex_cp_accuracy
+))
+```  
+
+The next machine learning method I used was Logistic Boost. I chose this method because it is a combination of using logistic regression as well as boosting, a very accurate machine learning method. Using Logistic Boost, I again made three different models. The first model I made was a model with all the predictors from our training data set. The second one I made was one with all the predictors besides the ones that required an invasive procedure or another test that required the patient to work out. The final model I made was one that just used `age`, `sex`, `cp`, and `location` as the predictors, these predictors are the ones that do not require any procedure and is just prior knowledge. 
+
+
+#### Random Forest 
+
+```{r rf full model, include = FALSE}
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+rf_all = train(form = num ~ .,
+                data = hd_trn_clean, 
+                method = 'rf', 
+                trControl = cv_5,
+                tuneLength = 15
+                )
+
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+rf_no_invasion = train(form = num ~ . - thalach - exang - oldpeak,
+                data = hd_trn_clean, 
+                method = 'rf', 
+                trControl = cv_5,
+                tuneLength = 12
+                )
+
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+rf_age_sex_cp = train(form = num ~ age + sex + cp + location,
+                data = hd_trn_clean, 
+                method = 'rf', 
+                trControl = cv_5,
+                tuneLength = 7
+                )
+
+```
+#### Random Forest Results
+```{r rf accuracy}
+rf_all_accuracy = accuracy(hd_tst_clean$num, predict(rf_all, hd_tst_clean))
+rf_no_invasion_accuracy = accuracy(hd_tst_clean$num, predict(rf_no_invasion, hd_tst_clean))
+rf_age_sex_cp_accuracy = accuracy(hd_tst_clean$num, predict(rf_age_sex_cp, hd_tst_clean))
+(rf_accuracies = c(
+  rf_all_accuracy = rf_all_accuracy,
+  rf_no_invasion_accuracy = rf_no_invasion_accuracy,
+  rf_age_sex_cp_accuracy = rf_age_sex_cp_accuracy
+))
+```
+
+The next machine learning method I used was Random Forest. I chose this method because it is one of the most popular machine learning methods for classification. I chose this machine learning method because essentially performing decision trees multiple times and choosing the best one by improving on each tree. Using Random Forest, I again made three different models. The first model I made was a model with all the predictors from our training data set. The second one I made was one with all the predictors besides the ones that required an invasive procedure or another test that required the patient to work out. The final model I made was one that just used `age`, `sex`, `cp`, and `location` as the predictors, these predictors are the ones that do not require any procedure and is just prior knowledge. 
+
+
+#### XGboost Linear
+
+```{r xgboost linear full, include = FALSE}
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+xgboostL_all = train(form = num ~ .,
+                data = hd_trn_clean, 
+                method = 'xgbLinear', 
+                trControl = cv_5
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+xgboostL_no_invasion = train(form = num ~ . - thalach - exang - oldpeak,
+                data = hd_trn_clean, 
+                method = 'xgbLinear', 
+                trControl = cv_5
+                )
+
+set.seed(432)
+cv_5 = trainControl(method = "cv", number = 5)
+xgboostL_age_sex_cp = train(form = num ~ age + sex + cp + location,
+                data = hd_trn_clean, 
+                method = 'xgbLinear', 
+                trControl = cv_5
+                )
+```
+
+```{r}
+xgboostL_all_accuracy = accuracy(hd_tst_clean$num, predict(xgboostL_all, hd_tst_clean))
+xgboostL_no_invasion_accuracy = accuracy(hd_tst_clean$num, predict(xgboostL_no_invasion, hd_tst_clean))
+xgboostL_age_sex_cp_accuracy = accuracy(hd_tst_clean$num, predict(xgboostL_age_sex_cp, hd_tst_clean))
+
+(xgboost_accuracies = c(
+  xgboostL_all_accuracy = xgboostL_all_accuracy,
+  xgboostL_no_invasion_accuracy = xgboostL_no_invasion_accuracy,
+  xgboostL_age_sex_cp_accuracy = xgboostL_age_sex_cp_accuracy
+))
+```
+
+
+The final machine learning method I used was Extreme Gradient Boost. I chose this method because it is probably the most popular machine learning method, giving the most accurate for results for many machine learning problems. Using XGBoost, I again made three different models. The first model I made was a model with all the predictors from our training data set. The second one I made was one with all the predictors besides the ones that required an invasive procedure or another test that required the patient to work out. The final model I made was one that just used `age`, `sex`, `cp`, and `location` as the predictors, these predictors are the ones that do not require any procedure and is just prior knowledge. 
+
 
 ***
 
 ## Results
 
-State your results here.
+```{r baseline results}
+accuracy(hd_tst_clean$num, actual = 'v0')
+accuracy(hd_tst_clean$num, actual = 'v1')
+```
+From this accuracy function, if we predict the majority class, we can see that our baseline accuracy is 50%. So if we construct a model, we should have a higher accuracy that 50%. 
+
+```{r results}
+accuracies = c(
+  log_accuracies,
+  knn_accuracies,
+  log_boosted_accuracies,
+  rf_accuracies,
+  xgboost_accuracies
+)
+accuracies
+accuracies[which.max(accuracies)]
+```
+As we can clearly see from the accuracy results, all of our models improve on the baseline accuracy of just predicting the majority class. From the results, we can also see that the Random Forest model is the best in terms of accuracy with a prediction accuracy of 81.62%, which is significantly better than the baseline. We can also see that in terms of differences between the predictors used, we do not see that much of a difference which is very surprising.
 
 ***
 
 ## Discussion
 
-Discuss your results here.
+As we saw before, the Random Forest model without the invasive procedures was the best model in terms of accuracy. This is good to see because we do not have to perform invasive procedures or have the patient exercise to determine if they have heart disease. We can also see that many of the models have similar accuracy. That does not surprise me but what does, is that a lot of the models improved or the accuracy slightly with the reduction of parameters. This is surprising to me because I didn't think you could predict whether a person has heart disease so accurately with just `age`, `sex`, `cp`, and `location`. Especially location because that shouldn't affect anything. 
+
+There are a few downsides to this data and data analysis. The first thing is that the data is from 1988, this means that that the data is over 30 years old. There could be medical advancements or habitual changes that could be make this data different than present day data. Another thing is that this dataset is not super representative of the population. These are only the patients that went to the hospital for a reason like chest pain. Most people would not go to the hospital to get their heart checked out if they thought they were healthy
 
 ***
 
-## Appendix
 
-Place potential additional information here.
